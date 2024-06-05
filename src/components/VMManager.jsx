@@ -6,6 +6,7 @@
 import React from 'react';
 import VMData from './VMData';
 import VMTable from './VMTable';
+import VMActions from './VMActions';
 
 class VMManager extends React.Component {
   state = {
@@ -23,6 +24,7 @@ class VMManager extends React.Component {
       <VMData render={(VMlist, refreshVMList) => (
         <div>
           <VMTable VMlist={VMlist} selectedVM={selectedVM} onRowClick={this.handleRowClick} />
+          <VMActions selectedVM={selectedVM} refreshVMList={refreshVMList}/>
         </div>
       )} />
     );
