@@ -14,7 +14,9 @@ class VMActions extends React.Component {
     isLoading: false,
     isSnapshotCreatorOpen: false,
     isSnapshotApplyOpen: false,
+    isMigrationOpen: false,
     snapshotList: [],
+    nodeList: [],
   };
 
   componentDidUpdate(prevProps) {
@@ -107,8 +109,45 @@ class VMActions extends React.Component {
     }
   };
 
+  // VM migration
+
+  openVMMigration = async () => {
+    const nodeList = await this.getNodeList();
+    this.setState({
+      isMigrationOpen: true,
+      nodeList,
+    });
+  };
+
+  closeVMMigration = () => {
+    this.setState({ isMigrationOpen: false });
+  };
+
+  handleMigrationConfirm = (node) => {
+    this.setState({ isMigrationOpen: false }, () => {
+      this.handleActionCrm('move', [node])
+    });
+  };
+
+  getNodeList = async () => {
+    const { selectedVM } = this.props;
+    try {
+      const output = await cockpit.spawn(["crm", "status", "--exclude=all", "--include=nodes"], {superuser: "try"});
+
+      const onlineNodesRegex = /\* Online: \[\s*([\w\s]+?)\s*\]/;
+      const onlineMatch = onlineNodesRegex.exec(output);
+      // If there is a match with the regex and the online node list is not empty, we collect them in an array
+      const onlineNodes = onlineMatch && onlineMatch[1] ? onlineMatch[1].split(' ') : [];
+
+      return onlineNodes;
+    } catch (error) {
+      console.error("Error executing VM action:", error);
+      return [];
+    }
+  };
+
   render() {
-    const { isDisabled, isLoading, isSnapshotCreatorOpen, isSnapshotApplyOpen, snapshotList } = this.state;
+    const { isDisabled, isLoading, isSnapshotCreatorOpen, isSnapshotApplyOpen, snapshotList, isMigrationOpen, nodeList } = this.state;
     return (
       <React.Fragment>
         <br />
@@ -167,6 +206,13 @@ class VMActions extends React.Component {
             </Button>
             <Button
               isDisabled={isDisabled || isLoading}
+              variant="secondary"
+              onClick={this.openVMMigration}
+            >
+              Migrate
+            </Button>
+            <Button
+              isDisabled={isDisabled || isLoading}
               variant="danger"
               onClick={() => this.handleActionVmMgr('remove')}
             >
@@ -206,6 +252,13 @@ class VMActions extends React.Component {
           options={snapshotList}
           onConfirm={this.handleSnapshotApplyConfirm}
           onCancel={this.closeVMSnapshotApply}
+        />
+        <SelectionModal
+          title="VM Migration"
+          isOpen={isMigrationOpen}
+          options={nodeList}
+          onConfirm={this.handleMigrationConfirm}
+          onCancel={this.closeVMMigration}
         />
       </React.Fragment>
     );
