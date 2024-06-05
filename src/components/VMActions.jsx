@@ -5,11 +5,13 @@
 
 import React from 'react';
 import { Button, Spinner } from '@patternfly/react-core';
+import VMSnapshot from './VMSnapshot';
 
 class VMActions extends React.Component {
   state = {
     isDisabled: true,
     isLoading: false,
+    isSnapshotCreatorOpen: false,
   };
 
   componentDidUpdate(prevProps) {
@@ -52,8 +54,25 @@ class VMActions extends React.Component {
     }
   };
 
+
+// Snapshot creation
+
+  openVMSnapshot = () => {
+    this.setState({ isSnapshotCreatorOpen: true });
+  };
+
+  closeVMSnapshot = () => {
+    this.setState({ isSnapshotCreatorOpen: false });
+  };
+
+  handleSnapshotConfirm = (snapshotName) => {
+    this.setState({ isSnapshotCreatorOpen: false }, () => {
+      this.handleActionVmMgr('create_snapshot', ['--snap_name', snapshotName]);
+    });
+  };
+
   render() {
-    const { isDisabled, isLoading } = this.state;
+    const { isDisabled, isLoading, isSnapshotCreatorOpen } = this.state;
     return (
       <React.Fragment>
         <br />
@@ -118,12 +137,26 @@ class VMActions extends React.Component {
               Remove
             </Button>
           </div>
+          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+            <Button
+              isDisabled={isDisabled || isLoading}
+              variant="secondary"
+              onClick={this.openVMSnapshot}
+            >
+              Snapshot
+            </Button>
+          </div>
           {isLoading && (
             <div style={{ marginTop: '20px' }}>
               <Spinner size="xl" />
             </div>
           )}
         </div>
+        <VMSnapshot
+          isOpen={isSnapshotCreatorOpen}
+          onConfirm={this.handleSnapshotConfirm}
+          onCancel={this.closeVMSnapshot}
+        />
       </React.Fragment>
     );
   }
