@@ -6,12 +6,15 @@
 import React from 'react';
 import { Button, Spinner } from '@patternfly/react-core';
 import VMSnapshot from './VMSnapshot';
+import SelectionModal from './selectionModal';
 
 class VMActions extends React.Component {
   state = {
     isDisabled: true,
     isLoading: false,
     isSnapshotCreatorOpen: false,
+    isSnapshotApplyOpen: false,
+    snapshotList: [],
   };
 
   componentDidUpdate(prevProps) {
@@ -71,8 +74,41 @@ class VMActions extends React.Component {
     });
   };
 
+// Rollback VM from snapshot
+
+  openVMSnapshotApply = async () => {
+    const snapshotList = await this.getVMSnapshotList();
+    this.setState({
+      isSnapshotApplyOpen: true,
+      snapshotList,
+    });
+  };
+
+  closeVMSnapshotApply = () => {
+    this.setState({ isSnapshotApplyOpen: false });
+  };
+
+  handleSnapshotApplyConfirm = (snapshotName) => {
+    this.setState({ isSnapshotApplyOpen: false }, () => {
+      this.handleActionVmMgr('rollback', ['--snap_name', snapshotName]);
+    });
+  };
+
+  getVMSnapshotList = async () => {
+    const { selectedVM } = this.props;
+
+    try {
+      const output = await cockpit.spawn(["vm-mgr", "list_snapshots", "-n", selectedVM.name], { superuser: "try" });
+      let snapshotList = output.trim().replace(/[\[\]']+/g, '').split(", ");
+      return snapshotList;
+    } catch (error) {
+      console.error("Error executing VM action:", error);
+      return [];
+    }
+  };
+
   render() {
-    const { isDisabled, isLoading, isSnapshotCreatorOpen } = this.state;
+    const { isDisabled, isLoading, isSnapshotCreatorOpen, isSnapshotApplyOpen, snapshotList } = this.state;
     return (
       <React.Fragment>
         <br />
@@ -145,6 +181,13 @@ class VMActions extends React.Component {
             >
               Snapshot
             </Button>
+            <Button
+              isDisabled={isDisabled || isLoading}
+              variant="secondary"
+              onClick={this.openVMSnapshotApply}
+            >
+              Apply Snapshot
+            </Button>
           </div>
           {isLoading && (
             <div style={{ marginTop: '20px' }}>
@@ -156,6 +199,13 @@ class VMActions extends React.Component {
           isOpen={isSnapshotCreatorOpen}
           onConfirm={this.handleSnapshotConfirm}
           onCancel={this.closeVMSnapshot}
+        />
+        <SelectionModal
+          title="Apply Snapshot"
+          isOpen={isSnapshotApplyOpen}
+          options={snapshotList}
+          onConfirm={this.handleSnapshotApplyConfirm}
+          onCancel={this.closeVMSnapshotApply}
         />
       </React.Fragment>
     );
