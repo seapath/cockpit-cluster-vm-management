@@ -8,7 +8,9 @@ import {
   ModalVariant,
   Spinner,
   Alert,
+  Progress,
 } from '@patternfly/react-core';
+import FileUploader from './fileUploader';
 
 class VMCreator extends React.Component {
   constructor(props) {
@@ -18,6 +20,8 @@ class VMCreator extends React.Component {
       vmName: '',
       vmImagePath: '',
       vmXmlPath: '',
+      progressUploadXML: 0,
+      progressUploadQCOW: 0,
       isVMCreated: null,
     };
   }
@@ -53,9 +57,26 @@ class VMCreator extends React.Component {
       });
   }
 
+  // Handle data received from the child component FileUploader
+  handleCallback = (filePath, fileType, progress) => {
+    if (fileType === '.xml') {
+      this.setState({ progressUploadXML: progress });
+    } else if (fileType === '.qcow2') {
+      this.setState({ progressUploadQCOW: progress });
+    }
+
+    if ( progress === 100) {
+      if (fileType === '.xml') {
+        this.setState({ vmXmlPath: filePath });
+      } else if (fileType === '.qcow2') {
+        this.setState({ vmImagePath: filePath });
+      }
+    }
+  }
+
   render() {
     const { isOpen, onClose } = this.props;
-    const { vmName, vmImagePath, vmXmlPath, isLoading, isVMCreated } = this.state;
+    const { vmName, vmImagePath, vmXmlPath, isLoading, isVMCreated, progressUploadXML, progressUploadQCOW } = this.state;
 
     return (
       <Modal
@@ -98,7 +119,14 @@ class VMCreator extends React.Component {
                 value={vmImagePath}
                 onChange={this.handleVmImagePathChange}
               />
+              <FileUploader
+                fileExtension=".qcow2"
+                handleCallback={(filePath, fileExtension, progress) => this.handleCallback(filePath, fileExtension, progress)}
+              />
             </div>
+            {progressUploadQCOW > 0 && (
+              <Progress value={progressUploadQCOW} />
+            )}
           </FormGroup>
 
           <FormGroup label="Path VM XML *" fieldId="path-vm-xml">
@@ -108,7 +136,14 @@ class VMCreator extends React.Component {
                 value={vmXmlPath}
                 onChange={this.handleVmXmlPathChange}
               />
+              <FileUploader
+                fileExtension=".xml"
+                handleCallback={(filePath, fileExtension, progress) => this.handleCallback(filePath, fileExtension, progress)}
+              />
             </div>
+            {progressUploadXML > 0 && (
+              <Progress value={progressUploadXML} />
+            )}
           </FormGroup>
 
         </Form>
