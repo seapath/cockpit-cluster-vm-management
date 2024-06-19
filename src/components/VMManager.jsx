@@ -17,6 +17,13 @@ class VMManager extends React.Component {
     this.setState({ selectedVM: vm });
   };
 
+  updateSelectedVM = (VMlist) => {
+    if (this.state.selectedVM) {
+      const updatedSelectedVM = VMlist.find(vm => vm.id === this.state.selectedVM.id);
+      this.setState({ selectedVM: updatedSelectedVM });
+    }
+  };
+
   render() {
     const { selectedVM } = this.state;
 
@@ -24,7 +31,7 @@ class VMManager extends React.Component {
       <VMData render={(VMlist, refreshVMList) => (
         <div>
           <VMTable VMlist={VMlist} selectedVM={selectedVM} onRowClick={this.handleRowClick} />
-          <VMActions selectedVM={selectedVM} refreshVMList={refreshVMList}/>
+          <VMActions VMlist={VMlist} selectedVM={selectedVM} refreshVMList={refreshVMList} updateSelectedVM={this.updateSelectedVM}/>
         </div>
       )} />
     );
