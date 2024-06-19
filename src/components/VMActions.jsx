@@ -9,15 +9,19 @@ import VMSnapshot from './VMSnapshot';
 import SelectionModal from './selectionModal';
 
 class VMActions extends React.Component {
-  state = {
-    isDisabled: true,
-    isLoading: false,
-    isSnapshotCreatorOpen: false,
-    isSnapshotApplyOpen: false,
-    isMigrationOpen: false,
-    snapshotList: [],
-    nodeList: [],
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      isDisabled: true,
+      isLoading: false,
+      isSnapshotCreatorOpen: false,
+      isSnapshotApplyOpen: false,
+      isMigrationOpen: false,
+      snapshotList: [],
+      nodeList: [],
+    };
+    this.pollingInterval = null;
+  }
 
   componentDidUpdate(prevProps) {
     if (prevProps.selectedVM !== this.props.selectedVM) {
@@ -49,6 +53,9 @@ class VMActions extends React.Component {
         cockpit.spawn(["crm", "resource", action, selectedVM.name, ...args], { superuser: "try" })
           .then(() => {
             refreshVMList();
+            if (action === 'move') {
+              this.startPollingMigrationStatus();
+              }
             this.setState({ isLoading: false });
           })
           .catch(error => {
@@ -59,6 +66,23 @@ class VMActions extends React.Component {
     }
   };
 
+  startPollingMigrationStatus = () => {
+    const { VMlist, updateSelectedVM } = this.props;
+    updateSelectedVM(VMlist);
+    this.pollingInterval = setInterval(this.checkMigrationStatus, 3000);
+  };
+
+  checkMigrationStatus = async () => {
+    const { selectedVM, VMlist, refreshVMList, updateSelectedVM } = this.props;
+
+    refreshVMList();
+    const nextState = VMlist.find(vm => vm.id === selectedVM.id).state.trim();
+
+    if (selectedVM.state.trim() === "Migrating" && nextState !== "Migrating") {
+      clearInterval(this.pollingInterval);
+    }
+    updateSelectedVM(VMlist);
+  };
 
 // Snapshot creation
 
