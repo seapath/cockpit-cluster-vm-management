@@ -20,9 +20,10 @@ class VMTable extends React.Component {
             <Th>Current Node</Th>
           </Tr>
         </Thead>
-        <Tbody>
+        <Tbody id="vm-table">
           {VMlist.map((vm) => (
             <Tr
+              id={vm.name}
               key={vm.id}
               onClick={() => onRowClick(vm)}
               style={{ backgroundColor: selectedVM && selectedVM.id === vm.id ? '#0066CC' : '' }}
