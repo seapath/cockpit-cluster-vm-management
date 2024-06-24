@@ -163,7 +163,11 @@ class VMActions extends React.Component {
       // If there is a match with the regex and the online node list is not empty, we collect them in an array
       const onlineNodes = onlineMatch && onlineMatch[1] ? onlineMatch[1].split(' ') : [];
 
-      return onlineNodes;
+      const filteredNodes = onlineNodes.filter(node => {
+          return !node.includes(selectedVM.currentNode.trim());
+      });
+
+      return filteredNodes;
     } catch (error) {
       console.error("Error executing VM action:", error);
       return [];
