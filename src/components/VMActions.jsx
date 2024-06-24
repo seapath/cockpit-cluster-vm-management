@@ -178,6 +178,7 @@ class VMActions extends React.Component {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <Button
+              id="action-start"
               isDisabled={isDisabled || isLoading}
               variant="primary"
               onClick={() => this.handleActionVmMgr('start')}
@@ -185,6 +186,7 @@ class VMActions extends React.Component {
               Start
             </Button>
             <Button
+              id="action-stop"
               isDisabled={isDisabled || isLoading}
               variant="secondary"
               onClick={() => this.handleActionVmMgr('stop')}
@@ -192,6 +194,7 @@ class VMActions extends React.Component {
               Stop
             </Button>
             <Button
+              id="action-stop-force"
               isDisabled={isDisabled || isLoading}
               variant="secondary"
               onClick={() => this.handleActionVmMgr('stop', ['--force'])}
@@ -200,6 +203,7 @@ class VMActions extends React.Component {
               Force Stop
             </Button>
             <Button
+              id="action-enable"
               isDisabled={isDisabled || isLoading}
               variant="secondary"
               onClick={() => this.handleActionVmMgr('enable')}
@@ -207,6 +211,7 @@ class VMActions extends React.Component {
               Enable
             </Button>
             <Button
+              id="action-disable"
               isDisabled={isDisabled || isLoading}
               variant="secondary"
               onClick={() => this.handleActionVmMgr('disable')}
@@ -214,6 +219,7 @@ class VMActions extends React.Component {
               Disable
             </Button>
             <Button
+              id="action-disable-force"
               isDisabled={isDisabled || isLoading}
               variant="secondary"
               onClick={() => this.handleActionVmMgr('disable', ['--force'])}
@@ -222,6 +228,7 @@ class VMActions extends React.Component {
               Force Disable
             </Button>
             <Button
+              id="action-restart"
               isDisabled={isDisabled || isLoading}
               variant="secondary"
               onClick={() => this.handleActionCrm('restart')}
@@ -229,6 +236,7 @@ class VMActions extends React.Component {
               Restart
             </Button>
             <Button
+              id="action-migrate"
               isDisabled={isDisabled || isLoading}
               variant="secondary"
               onClick={this.openVMMigration}
@@ -236,6 +244,7 @@ class VMActions extends React.Component {
               Migrate
             </Button>
             <Button
+              id="action-remove"
               isDisabled={isDisabled || isLoading}
               variant="danger"
               onClick={() => this.handleActionVmMgr('remove')}
@@ -245,6 +254,7 @@ class VMActions extends React.Component {
           </div>
           <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
             <Button
+              id="action-snapshot"
               isDisabled={isDisabled || isLoading}
               variant="secondary"
               onClick={this.openVMSnapshot}
@@ -252,6 +262,7 @@ class VMActions extends React.Component {
               Snapshot
             </Button>
             <Button
+              id="action-snapshot-apply"
               isDisabled={isDisabled || isLoading}
               variant="secondary"
               onClick={this.openVMSnapshotApply}
