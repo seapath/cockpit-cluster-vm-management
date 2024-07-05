@@ -1,6 +1,7 @@
 {
   "name": "cluster-vm-management",
   "description": "cockpit cluster vm management",
+  "version": "1.0.0",
   "type": "module",
   "main": "index.js",
   "repository": "",
@@ -25,7 +26,6 @@
     "@patternfly/react-core": "5.3.0",
     "@patternfly/react-icons": "5.3.0",
     "@patternfly/react-styles": "5.3.0",
-    "fs-extra": "^11.2.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   }
