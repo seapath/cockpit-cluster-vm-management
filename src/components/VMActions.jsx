@@ -158,14 +158,12 @@ class VMActions extends React.Component {
     try {
       const output = await cockpit.spawn(["crm", "status", "--exclude=all", "--include=nodes"], {superuser: "try"});
 
-      const onlineNodesRegex = /\* Online: \[\s*([\w\s]+?)\s*\]/;
+      const onlineNodesRegex = /\* Online: \[\s*([\w\-\s]+?)\s*\]/;
       const onlineMatch = onlineNodesRegex.exec(output);
       // If there is a match with the regex and the online node list is not empty, we collect them in an array
       const onlineNodes = onlineMatch && onlineMatch[1] ? onlineMatch[1].split(' ') : [];
 
-      const filteredNodes = onlineNodes.filter(node => {
-          return !node.includes(selectedVM.currentNode.trim());
-      });
+      const filteredNodes = onlineNodes.filter( node => node.trim() !== selectedVM.currentNode.trim());
 
       return filteredNodes;
     } catch (error) {
