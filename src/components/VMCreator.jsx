@@ -9,6 +9,7 @@ import {
   Spinner,
   Alert,
   Progress,
+  Checkbox,
 } from '@patternfly/react-core';
 import FileUploader from './fileUploader';
 
@@ -23,6 +24,8 @@ class VMCreator extends React.Component {
       progressUploadXML: 0,
       progressUploadQCOW: 0,
       isVMCreated: null,
+      isLiveMigrationEnabled: false,
+      migrationUser: '',
     };
   }
 
@@ -38,12 +41,23 @@ class VMCreator extends React.Component {
     this.setState({ vmXmlPath: e.target.value });
   }
 
+  handleMigrationUserChange = (e) => {
+    this.setState({ migrationUser: e.target.value });
+  }
+
   handleConfirm = () => {
     const { vmName, vmImagePath, vmXmlPath } = this.state;
     const { refreshVMList } = this.props;
 
+    const args = [];
+    if (this.state.isLiveMigrationEnabled) {
+      args.push('--enable-live-migration');
+      args.push('--migration-user');
+      args.push(this.state.migrationUser);
+    }
+
     this.setState({ isLoading: true, isVMCreated: null });
-    cockpit.spawn(["vm-mgr", "create", "--name", vmName, "--image", vmImagePath, "--xml", vmXmlPath], { superuser: "try" })
+    cockpit.spawn(["vm-mgr", "create", "--name", vmName, "--image", vmImagePath, "--xml", vmXmlPath, ...args], { superuser: "try" })
       .then(() => {
         this.setState({ isVMCreated: true });
         refreshVMList();
@@ -72,6 +86,10 @@ class VMCreator extends React.Component {
         this.setState({ vmImagePath: filePath });
       }
     }
+  }
+
+  handleCheckboxChange = () => {
+    this.setState({ isLiveMigrationEnabled: !this.state.isLiveMigrationEnabled });
   }
 
   render() {
@@ -145,6 +163,23 @@ class VMCreator extends React.Component {
               <Progress value={progressUploadXML} />
             )}
           </FormGroup>
+
+          <Checkbox
+            id="enable-live-migration"
+            label="Enable live migration"
+            isChecked={this.state.isLiveMigrationEnabled}
+            onChange={this.handleCheckboxChange}
+          />
+          {this.state.isLiveMigrationEnabled && (
+            <FormGroup label="Migration User" fieldId="migration-user">
+              <TextInput
+                id="migration-user"
+                value={this.state.migrationUser}
+                onChange={this.handleMigrationUserChange}
+              />
+            </FormGroup>
+          )}
+
 
         </Form>
 
