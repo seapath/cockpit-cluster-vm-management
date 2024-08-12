@@ -55,8 +55,11 @@ class VMActions extends React.Component {
             refreshVMList();
             if (action === 'move') {
               this.startPollingMigrationStatus();
-              }
-            this.setState({ isLoading: false });
+            }
+            else{
+              refreshVMList();
+              this.setState({ isLoading: false });
+            }
           })
           .catch(error => {
             console.error("Error executing VM action:", error);
@@ -67,21 +70,40 @@ class VMActions extends React.Component {
   };
 
   startPollingMigrationStatus = () => {
-    const { VMlist, updateSelectedVM } = this.props;
-    updateSelectedVM(VMlist);
-    this.pollingInterval = setInterval(this.checkMigrationStatus, 3000);
+    this.pollingAttempts = 0;
+    this.maxPollingAttempts = 15;
+    this.pollingInterval = setInterval(this.checkMigrationStatus, 1000);
+    this.setState ({
+      isLoading: true,
+      isDisabled: true,
+    });
   };
 
   checkMigrationStatus = async () => {
-    const { selectedVM, VMlist, refreshVMList, updateSelectedVM } = this.props;
+    const { selectedVM, refreshVMList } = this.props;
 
-    refreshVMList();
-    const nextState = VMlist.find(vm => vm.id === selectedVM.id).state.trim();
+    this.pollingAttempts += 1;
+    let vmStatus = null;
 
-    if (selectedVM.state.trim() === "Migrating" && nextState !== "Migrating") {
+    await cockpit.spawn(["crm_mon", "--output-as", "xml"], { superuser: "try" })
+          .then((output) => {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(output, 'text/xml');
+            const resource = xml.querySelector(`resource[id="${selectedVM.name}"]`);
+
+            if (resource) {
+              vmStatus = resource.getAttribute("role");
+            }
+          })
+
+    if (vmStatus === "Started" || this.pollingAttempts >= this.maxPollingAttempts) {
       clearInterval(this.pollingInterval);
+      refreshVMList();
+      this.setState({
+        isLoading: false,
+        isDisabled: false,
+      });
     }
-    updateSelectedVM(VMlist);
   };
 
 // Snapshot creation

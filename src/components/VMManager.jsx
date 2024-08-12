@@ -21,13 +21,6 @@ class VMManager extends React.Component {
     this.setState({ selectedVM: vm });
   };
 
-  updateSelectedVM = (VMlist) => {
-    if (this.state.selectedVM) {
-      const updatedSelectedVM = VMlist.find(vm => vm.id === this.state.selectedVM.id);
-      this.setState({ selectedVM: updatedSelectedVM });
-    }
-  };
-
   openVMCreator = () => {
     this.setState({ isVMCreatorOpen: true });
   };
@@ -46,7 +39,7 @@ class VMManager extends React.Component {
             <Button variant="primary" onClick={this.openVMCreator}>Create VM</Button>
           </div>
           <VMTable VMlist={VMlist} selectedVM={selectedVM} onRowClick={this.handleRowClick} />
-          <VMActions VMlist={VMlist} selectedVM={selectedVM} refreshVMList={refreshVMList} updateSelectedVM={this.updateSelectedVM}/>
+          <VMActions VMlist={VMlist} selectedVM={selectedVM} refreshVMList={refreshVMList} />
           <VMCreator
             isOpen={isVMCreatorOpen}
             onClose={this.closeVMCreator}
