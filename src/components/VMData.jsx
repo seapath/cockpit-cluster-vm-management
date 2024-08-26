@@ -24,7 +24,12 @@ class VMData extends React.Component {
   fetchVmInformations = async () => {
     try {
       const output = await cockpit.spawn(["vm-mgr", "list"], { superuser: "try" });
-      const vmNames = output.trim().split('\n');
+      const vmNames = output.trim().split('\n').filter(name => name !== "");
+
+      if (vmNames.length === 0) {
+        this.setState({ VMlist: [] });
+        return;
+      }
 
       const VMlist = vmNames.map((name, index) => ({
         id: index + 1,
