@@ -51,7 +51,7 @@ class VMData extends React.Component {
       const locationPromises = VMlist.map((vm, index) =>
         cockpit.spawn(["crm", "resource", "locate", vm.name], { superuser: "try" })
           .then(output => {
-            const regex = /:(.*)/g;
+            const regex = /:\s*(\S+)\s*/g;
             let match = regex.exec(output);
             const currentNode = match !== null ? match[1] : "-";
             return { index, currentNode };
