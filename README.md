@@ -9,6 +9,7 @@ Features of the plugin:
 - Perform operations on deployed VM (Start, Stop, Enable, Disable, Restart, Migrate, Snapshot, Remove)
 - Upload Qcow2 and XML files
 - Create VM from existing Qcow2 and XML files
+- Access to the VM running on the cluster
 
 This plugin requires administrative access.
 
