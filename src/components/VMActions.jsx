@@ -319,6 +319,17 @@ class VMActions extends React.Component {
           onConfirm={this.handleMigrationConfirm}
           onCancel={this.closeVMMigration}
         />
+        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+          <Button
+              id="vm-console"
+              variant="secondary"
+              isDisabled={isDisabled || isLoading}
+              onClick={() => {cockpit.location.go(["console", this.props.selectedVM.name])}}
+            >
+              Virtual Machine Console
+          </Button>
+        </div>
+
       </React.Fragment>
     );
   }
