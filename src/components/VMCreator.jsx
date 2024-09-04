@@ -12,6 +12,7 @@ import {
   Checkbox,
 } from '@patternfly/react-core';
 import FileUploader from './fileUploader';
+import { FileAutoComplete } from "cockpit-components-file-autocomplete.jsx";
 
 class VMCreator extends React.Component {
   constructor(props) {
@@ -33,12 +34,12 @@ class VMCreator extends React.Component {
     this.setState({ vmName: e.target.value });
   }
 
-  handleVmImagePathChange = (e) => {
-    this.setState({ vmImagePath: e.target.value });
+  handleVmImagePathChange = (vmImagePath) => {
+    this.setState({ vmImagePath });
   }
 
-  handleVmXmlPathChange = (e) => {
-    this.setState({ vmXmlPath: e.target.value });
+  handleVmXmlPathChange = (vmXmlPath) => {
+    this.setState({ vmXmlPath });
   }
 
   handleMigrationUserChange = (e) => {
@@ -132,10 +133,13 @@ class VMCreator extends React.Component {
 
           <FormGroup label="Path VM Image *" fieldId="path-vm-image">
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-              <TextInput
+              <FileAutoComplete
                 id="path-vm-image"
+                key={vmImagePath} // Force the update: the modification of "vmImagePath" by "handleCallback" do not change the value displayed
+                placeholder={"Path to QCOW2 file on host's file system"}
                 value={vmImagePath}
                 onChange={this.handleVmImagePathChange}
+                superuser="try"
               />
               <FileUploader
                 fileExtension=".qcow2"
@@ -149,10 +153,13 @@ class VMCreator extends React.Component {
 
           <FormGroup label="Path VM XML *" fieldId="path-vm-xml">
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-              <TextInput
+              <FileAutoComplete
                 id="path-vm-xml"
+                key={vmXmlPath} // Force the update: the modification of "vmXmlPath" by "handleCallback" do not change the value displayed
+                placeholder={"Path to XML file on host's file system"}
                 value={vmXmlPath}
                 onChange={this.handleVmXmlPathChange}
+                superuser="try"
               />
               <FileUploader
                 fileExtension=".xml"
