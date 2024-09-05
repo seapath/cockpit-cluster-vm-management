@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Modal, ModalVariant, Button, Form, FormGroup, TextInput } from '@patternfly/react-core';
 
 class VMSnapshot extends React.Component {
@@ -59,6 +60,12 @@ class VMSnapshot extends React.Component {
       </Modal>
     );
   }
+}
+
+VMSnapshot.propTypes = {
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  isOpen: PropTypes.bool.isRequired,
 }
 
 export default VMSnapshot;

@@ -5,6 +5,7 @@
 
 import React from 'react';
 import cockpit from 'cockpit';
+import PropTypes from 'prop-types';
 
 class VMData extends React.Component {
   state = {
@@ -114,6 +115,10 @@ class VMData extends React.Component {
       </div>
     );
   }
+}
+
+VMData.propTypes = {
+  render: PropTypes.func.isRequired,
 }
 
 export default VMData;
