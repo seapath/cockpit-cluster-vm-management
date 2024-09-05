@@ -5,6 +5,7 @@
 
 import cockpit from "cockpit";
 import React from "react";
+import PropTypes from 'prop-types';
 
 import { Terminal } from "cockpit-components-terminal.jsx";
 import {
@@ -200,4 +201,10 @@ export default class VMConsole extends React.Component {
       </div>
     );
   }
+}
+
+VMConsole.propTypes = {
+  libvirtUser: PropTypes.string.isRequired,
+  refreshVMList: PropTypes.func.isRequired,
+  virtualMachineName: PropTypes.string.isRequired,
 }

@@ -5,6 +5,7 @@
 
 import React from 'react';
 import cockpit from 'cockpit';
+import PropTypes from 'prop-types';
 import { Button } from '@patternfly/react-core';
 
 class FileUploader extends React.Component {
@@ -86,6 +87,11 @@ class FileUploader extends React.Component {
       </div>
     );
   }
+}
+
+FileUploader.propTypes = {
+  handleCallback: PropTypes.func.isRequired,
+  fileExtension: PropTypes.string,
 }
 
 export default FileUploader;

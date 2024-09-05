@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   Button,
   Modal,
@@ -200,6 +201,12 @@ class VMCreator extends React.Component {
       </Modal>
     );
   }
+}
+
+VMCreator.propTypes = {
+  refreshVMList: PropTypes.func.isRequired,
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 }
 
 export default VMCreator;

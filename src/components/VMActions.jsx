@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Button, Spinner } from '@patternfly/react-core';
 import VMSnapshot from './VMSnapshot';
 import SelectionModal from './selectionModal';
@@ -333,6 +334,11 @@ class VMActions extends React.Component {
       </React.Fragment>
     );
   }
+}
+
+SelectionModal.propTypes = {
+  selectedVM: PropTypes.object,
+  refreshVMList: PropTypes.func,
 }
 
 export default VMActions;

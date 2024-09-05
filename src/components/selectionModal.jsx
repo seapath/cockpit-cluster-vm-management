@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Modal, ModalVariant, Button, Dropdown, MenuToggle, DropdownItem, DropdownList } from '@patternfly/react-core';
 
 class SelectionModal extends React.Component {
@@ -72,6 +73,14 @@ class SelectionModal extends React.Component {
       </Modal>
     );
   }
+}
+
+SelectionModal.propTypes = {
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  isOpen: PropTypes.bool.isRequired,
+  options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  title: PropTypes.string.isRequired
 }
 
 export default SelectionModal;

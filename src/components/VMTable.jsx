@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
 
 class VMTable extends React.Component {
@@ -60,6 +61,26 @@ class VMTable extends React.Component {
       </div>
     );
   }
+}
+
+VMTable.propTypes = {
+  VMlist: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+      state: PropTypes.string.isRequired,
+      defaultNode: PropTypes.string.isRequired,
+      currentNode: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  selectedVM: PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    state: PropTypes.string,
+    defaultNode: PropTypes.string,
+    currentNode: PropTypes.string,
+}),
+  onRowClick: PropTypes.func.isRequired,
 }
 
 export default VMTable;
