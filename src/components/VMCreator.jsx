@@ -7,7 +7,6 @@ import {
   FormGroup,
   TextInput,
   ModalVariant,
-  Spinner,
   Alert,
   Progress,
   Checkbox,
@@ -25,6 +24,7 @@ class VMCreator extends React.Component {
       vmXmlPath: '',
       progressUploadXML: 0,
       progressUploadQCOW: 0,
+      progressVMCreation: '',
       isVMCreated: null,
       isLiveMigrationEnabled: false,
       migrationUser: '',
@@ -59,7 +59,10 @@ class VMCreator extends React.Component {
     }
 
     this.setState({ isLoading: true, isVMCreated: null });
-    cockpit.spawn(["vm-mgr", "create", "--name", vmName, "--image", vmImagePath, "--xml", vmXmlPath, ...args], { superuser: "try" })
+    cockpit.spawn(["vm-mgr", "create", "-p", "--name", vmName, "--image", vmImagePath, "--xml", vmXmlPath, ...args], { superuser: "try" })
+      .stream((output) => {
+        this.setState({ progressVMCreation: output.trim() });
+      })
       .then(() => {
         this.setState({ isVMCreated: true });
         refreshVMList();
@@ -197,7 +200,7 @@ class VMCreator extends React.Component {
         </div>
         <br />
 
-        {isLoading && <Spinner size="lg" style={{ marginTop: '20px' }} />}
+        {isLoading && <div style={{textAlign: "center"}}> {this.state.progressVMCreation} </div>}
       </Modal>
     );
   }
