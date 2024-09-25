@@ -24,6 +24,7 @@ class SelectionModal extends React.Component {
   handleConfirm = () => {
     const { selectedItem } = this.state;
     this.props.onConfirm(selectedItem);
+    this.setState({ selectedItem: '' });
   };
 
   handleCancel = () => {

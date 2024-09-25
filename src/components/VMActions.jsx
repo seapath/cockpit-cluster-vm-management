@@ -30,43 +30,41 @@ class VMActions extends React.Component {
     }
   }
 
-  handleActionVmMgr = (action, args = []) => {
-    const { selectedVM, refreshVMList } = this.props;
+  handleActionVmMgr = async (action, args = []) => {
+    const { selectedVM, refreshVMList, updateSelectedVM } = this.props;
     if (selectedVM) {
-      this.setState({ isLoading: true }, () => {
-        cockpit.spawn(["vm-mgr", action, "-n", selectedVM.name, ...args], { superuser: "try" })
-          .then(() => {
-            refreshVMList();
-            this.setState({ isLoading: false });
-          })
-          .catch(error => {
-            console.error("Error executing VM action:", error);
-            this.setState({ isLoading: false });
-          });
-      });
+      this.setState({ isLoading: true });
+      try {
+        await cockpit.spawn(["vm-mgr", action, "-n", selectedVM.name, ...args], { superuser: "try" });
+        await refreshVMList();
+        const updatedVM = this.props.VMlist.find((vm) => vm.name === selectedVM.name);
+        updateSelectedVM(updatedVM);
+      } catch (error) {
+        console.error("Error executing VM action:", error);
+      } finally {
+        this.setState({ isLoading: false });
+      }
     }
   };
 
-  handleActionCrm = (action, args = []) => {
-    const { selectedVM, refreshVMList } = this.props;
+  handleActionCrm = async (action, args = []) => {
+    const { selectedVM, refreshVMList, updateSelectedVM } = this.props;
     if (selectedVM) {
-      this.setState({ isLoading: true }, () => {
-        cockpit.spawn(["crm", "resource", action, selectedVM.name, ...args], { superuser: "try" })
-          .then(() => {
-            refreshVMList();
-            if (action === 'move') {
-              this.startPollingMigrationStatus();
-            }
-            else{
-              refreshVMList();
-              this.setState({ isLoading: false });
-            }
-          })
-          .catch(error => {
-            console.error("Error executing VM action:", error);
-            this.setState({ isLoading: false });
-          });
-      });
+      this.setState({ isLoading: true });
+      try {
+        await cockpit.spawn(["crm", "resource", action, selectedVM.name, ...args], { superuser: "try" });
+        await refreshVMList();
+        const updatedVM = this.props.VMlist.find((vm) => vm.name === selectedVM.name);
+        updateSelectedVM(updatedVM);
+
+        if (action === 'move') {
+          this.startPollingMigrationStatus();
+        }
+      } catch (error) {
+        console.error("Error executing VM action:", error);
+      } finally {
+        this.setState({ isLoading: false });
+      }
     }
   };
 
@@ -81,7 +79,7 @@ class VMActions extends React.Component {
   };
 
   checkMigrationStatus = async () => {
-    const { selectedVM, refreshVMList } = this.props;
+    const { selectedVM, refreshVMList, updateSelectedVM } = this.props;
 
     this.pollingAttempts += 1;
     let vmStatus = null;
@@ -99,7 +97,9 @@ class VMActions extends React.Component {
 
     if (vmStatus === "Started" || this.pollingAttempts >= this.maxPollingAttempts) {
       clearInterval(this.pollingInterval);
-      refreshVMList();
+      await refreshVMList();
+      const updatedVM = this.props.VMlist.find((vm) => vm.name === selectedVM.name);
+      updateSelectedVM(updatedVM);
       this.setState({
         isLoading: false,
         isDisabled: false,
