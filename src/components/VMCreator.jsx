@@ -135,7 +135,7 @@ class VMCreator extends React.Component {
             />
           </FormGroup>
 
-          <FormGroup label="Path VM Image *" fieldId="path-vm-image">
+          <FormGroup label="Path VM Image" fieldId="path-vm-image">
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
               <FileAutoComplete
                 id="path-vm-image"
@@ -155,7 +155,7 @@ class VMCreator extends React.Component {
             )}
           </FormGroup>
 
-          <FormGroup label="Path VM XML *" fieldId="path-vm-xml">
+          <FormGroup label="Path VM XML" fieldId="path-vm-xml">
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
               <FileAutoComplete
                 id="path-vm-xml"
@@ -193,13 +193,7 @@ class VMCreator extends React.Component {
 
 
         </Form>
-
         <br />
-        <div style={{ fontSize: '12px' }}>
-          (* path from the host machine)
-        </div>
-        <br />
-
         {isLoading && <div style={{textAlign: "center"}}> {this.state.progressVMCreation} </div>}
       </Modal>
     );
