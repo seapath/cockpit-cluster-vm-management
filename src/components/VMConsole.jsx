@@ -205,6 +205,5 @@ export default class VMConsole extends React.Component {
 
 VMConsole.propTypes = {
   libvirtUser: PropTypes.string.isRequired,
-  refreshVMList: PropTypes.func.isRequired,
   virtualMachineName: PropTypes.string.isRequired,
 }
