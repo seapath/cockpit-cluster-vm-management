@@ -10,6 +10,7 @@ import {
   Alert,
   Progress,
   Checkbox,
+  Radio,
 } from '@patternfly/react-core';
 import FileUploader from './fileUploader';
 import { FileAutoComplete } from "cockpit-components-file-autocomplete.jsx";
@@ -28,6 +29,9 @@ class VMCreator extends React.Component {
       isVMCreated: null,
       isLiveMigrationEnabled: false,
       migrationUser: '',
+      isPinnedHostEnabled: false,
+      isPreferredHostEnabled: false,
+      locationHostname: ''
     };
   }
 
@@ -47,6 +51,17 @@ class VMCreator extends React.Component {
     this.setState({ migrationUser: e.target.value });
   }
 
+  handleLocationPreferenceChange = (e) => {
+    const id = e.target.id;
+    this.setState({
+      isPinnedHostEnabled: id === 'pinned-host',
+      isPreferredHostEnabled: id === 'preferred-host',
+    });
+  };
+  handleLocationHostnameChange = (e) => {
+    this.setState({ locationHostname: e.target.value });
+  }
+
   handleConfirm = () => {
     const { vmName, vmImagePath, vmXmlPath } = this.state;
     const { refreshVMList } = this.props;
@@ -56,6 +71,14 @@ class VMCreator extends React.Component {
       args.push('--enable-live-migration');
       args.push('--migration-user');
       args.push(this.state.migrationUser);
+    }
+
+    if (this.state.isPinnedHostEnabled){
+      args.push('--pinned-host');
+      args.push(this.state.locationHostname);
+    }else if (this.state.isPreferredHostEnabled){
+      args.push('--preferred-host');
+      args.push(this.state.locationHostname);
     }
 
     this.setState({ isLoading: true, isVMCreated: null });
@@ -190,6 +213,36 @@ class VMCreator extends React.Component {
               />
             </FormGroup>
           )}
+
+        <FormGroup role="radiogroup" label="Location preference" isInline>
+          <Radio
+            label="None"
+            id="none"
+            onChange={this.handleLocationPreferenceChange}
+            isChecked={!this.state.isPinnedHostEnabled && !this.state.isPreferredHostEnabled}
+          />
+          <Radio
+            label="Preferred host"
+            id="preferred-host"
+            onChange={this.handleLocationPreferenceChange}
+            isChecked={this.state.isPreferredHostEnabled}
+          />
+          <Radio
+            label="Pinned host"
+            id="pinned-host"
+            onChange={this.handleLocationPreferenceChange}
+            isChecked={this.state.isPinnedHostEnabled}
+          />
+        </FormGroup>
+        {(this.state.isPinnedHostEnabled || this.state.isPreferredHostEnabled) && (
+          <FormGroup label="Hostname" fieldId="hostname">
+            <TextInput
+              id="hostname"
+              value={this.state.locationHostname}
+              onChange={this.handleLocationHostnameChange}
+            />
+          </FormGroup>
+        )}
 
 
         </Form>
