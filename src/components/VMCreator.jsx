@@ -5,6 +5,8 @@ import {
   Modal,
   Form,
   FormGroup,
+  FormSelect,
+  FormSelectOption,
   TextInput,
   ModalVariant,
   Alert,
@@ -27,6 +29,7 @@ class VMCreator extends React.Component {
       progressUploadQCOW: 0,
       progressVMCreation: '',
       isVMCreated: null,
+      diskBusType: 'virtio',
       isLiveMigrationEnabled: false,
       migrationUser: '',
       isPinnedHostEnabled: false,
@@ -47,6 +50,10 @@ class VMCreator extends React.Component {
     this.setState({ vmXmlPath });
   }
 
+  handleDiskBusTypeChange = (e, diskBusType) => {
+    this.setState({ diskBusType });
+  }
+
   handleMigrationUserChange = (e) => {
     this.setState({ migrationUser: e.target.value });
   }
@@ -63,7 +70,7 @@ class VMCreator extends React.Component {
   }
 
   handleConfirm = () => {
-    const { vmName, vmImagePath, vmXmlPath } = this.state;
+    const { vmName, vmImagePath, vmXmlPath, diskBusType } = this.state;
     const { refreshVMList } = this.props;
 
     const args = [];
@@ -82,7 +89,7 @@ class VMCreator extends React.Component {
     }
 
     this.setState({ isLoading: true, isVMCreated: null });
-    cockpit.spawn(["vm-mgr", "create", "-p", "--name", vmName, "--image", vmImagePath, "--xml", vmXmlPath, ...args], { superuser: "try" })
+    cockpit.spawn(["vm-mgr", "create", "-p", "--name", vmName, "--image", vmImagePath, "--xml", vmXmlPath, "--disk-bus", diskBusType, ...args], { superuser: "try" })
       .stream((output) => {
         this.setState({ progressVMCreation: output.trim() });
       })
@@ -123,6 +130,7 @@ class VMCreator extends React.Component {
   render() {
     const { isOpen, onClose } = this.props;
     const { vmName, vmImagePath, vmXmlPath, isLoading, isVMCreated, progressUploadXML, progressUploadQCOW } = this.state;
+    const diskBusTypes = [ "sata", "scsi", "usb", "virtio" ];
 
     return (
       <Modal
@@ -176,6 +184,16 @@ class VMCreator extends React.Component {
             {progressUploadQCOW > 0 && (
               <Progress value={progressUploadQCOW} />
             )}
+          </FormGroup>
+
+          <FormGroup label="VM disk bus" fieldId="vm-disk-bus">
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+              <FormSelect id="vm-disk-bus-selector" value={this.state.diskBusType} onChange={this.handleDiskBusTypeChange}>
+                {diskBusTypes.map((option, index) =>
+                  <FormSelectOption label={option} key={index} value={option} />
+                )}
+              </FormSelect>
+            </div>
           </FormGroup>
 
           <FormGroup label="Path VM XML" fieldId="path-vm-xml">
