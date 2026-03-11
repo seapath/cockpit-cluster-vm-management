@@ -14,6 +14,11 @@ import {
   MenuToggle,
   DropdownItem,
   DropdownList,
+  Form,
+  FormGroup,
+  TextInput,
+  Checkbox,
+  Radio,
 } from '@patternfly/react-core';
 
 class VMImporter extends React.Component {
@@ -26,6 +31,11 @@ class VMImporter extends React.Component {
       isLoading: false,
       isImported: null,
       progressImport: '',
+      isLiveMigrationEnabled: false,
+      migrationUser: '',
+      isPinnedHostEnabled: false,
+      isPreferredHostEnabled: false,
+      locationHostname: '',
     };
   }
 
@@ -60,12 +70,47 @@ class VMImporter extends React.Component {
     this.setState({ selectedVM: vm, isDropdownOpen: false });
   };
 
+  handleCheckboxChange = () => {
+    this.setState({ isLiveMigrationEnabled: !this.state.isLiveMigrationEnabled });
+  };
+
+  handleMigrationUserChange = (e) => {
+    this.setState({ migrationUser: e.target.value });
+  };
+
+  handleLocationPreferenceChange = (e) => {
+    const id = e.target.id;
+    this.setState({
+      isPinnedHostEnabled: id === 'import-pinned-host',
+      isPreferredHostEnabled: id === 'import-preferred-host',
+    });
+  };
+
+  handleLocationHostnameChange = (e) => {
+    this.setState({ locationHostname: e.target.value });
+  };
+
   handleConfirm = () => {
     const { selectedVM } = this.state;
     const { refreshVMList } = this.props;
 
+    const args = [];
+    if (this.state.isLiveMigrationEnabled) {
+      args.push('--enable-live-migration');
+      args.push('--migration-user');
+      args.push(this.state.migrationUser);
+    }
+
+    if (this.state.isPinnedHostEnabled) {
+      args.push('--pinned-host');
+      args.push(this.state.locationHostname);
+    } else if (this.state.isPreferredHostEnabled) {
+      args.push('--preferred-host');
+      args.push(this.state.locationHostname);
+    }
+
     this.setState({ isLoading: true, isImported: null, progressImport: '' });
-    cockpit.spawn(["vm-mgr", "add-to-cluster", "-p", "--name", selectedVM], { superuser: "try" })
+    cockpit.spawn(["vm-mgr", "add-to-cluster", "-p", "--name", selectedVM, ...args], { superuser: "try" })
       .stream((output) => {
         this.setState({ progressImport: output.trim() });
       })
@@ -128,6 +173,54 @@ class VMImporter extends React.Component {
             ))}
           </DropdownList>
         </Dropdown>
+
+        <Form style={{ marginTop: '20px' }}>
+          <Checkbox
+            id="import-enable-live-migration"
+            label="Enable live migration"
+            isChecked={this.state.isLiveMigrationEnabled}
+            onChange={this.handleCheckboxChange}
+          />
+          {this.state.isLiveMigrationEnabled && (
+            <FormGroup label="Migration User" fieldId="import-migration-user">
+              <TextInput
+                id="import-migration-user"
+                value={this.state.migrationUser}
+                onChange={this.handleMigrationUserChange}
+              />
+            </FormGroup>
+          )}
+
+          <FormGroup role="radiogroup" label="Location preference" isInline>
+            <Radio
+              label="None"
+              id="import-none"
+              onChange={this.handleLocationPreferenceChange}
+              isChecked={!this.state.isPinnedHostEnabled && !this.state.isPreferredHostEnabled}
+            />
+            <Radio
+              label="Preferred host"
+              id="import-preferred-host"
+              onChange={this.handleLocationPreferenceChange}
+              isChecked={this.state.isPreferredHostEnabled}
+            />
+            <Radio
+              label="Pinned host"
+              id="import-pinned-host"
+              onChange={this.handleLocationPreferenceChange}
+              isChecked={this.state.isPinnedHostEnabled}
+            />
+          </FormGroup>
+          {(this.state.isPinnedHostEnabled || this.state.isPreferredHostEnabled) && (
+            <FormGroup label="Hostname" fieldId="import-hostname">
+              <TextInput
+                id="import-hostname"
+                value={this.state.locationHostname}
+                onChange={this.handleLocationHostnameChange}
+              />
+            </FormGroup>
+          )}
+        </Form>
 
         <br />
         {isLoading && <div style={{ textAlign: "center" }}>{progressImport}</div>}
