@@ -16,6 +16,10 @@ import {
 } from '@patternfly/react-core';
 import FileUploader from './fileUploader';
 import { FileAutoComplete } from "cockpit-components-file-autocomplete.jsx";
+import CPUConfig from './CPUConfig';
+import MemoryConfig from './MemoryConfig';
+import DisplayConfig from './DisplayConfig';
+import NetworkConfig from './NetworkConfig';
 
 class VMCreator extends React.Component {
   constructor(props) {
@@ -33,7 +37,24 @@ class VMCreator extends React.Component {
       isLiveMigrationEnabled: true,
       isPinnedHostEnabled: false,
       isPreferredHostEnabled: false,
-      locationHostname: ''
+      locationHostname: '',
+      // New state for form-based creation
+      importXml: false,
+      isRealtime: false,
+      vcpuCount: 1,
+      hostPassthrough: false,
+      cpuPinning: [''],
+      rtPriority: 1,
+      emulatorPin: '',
+      memorySize: 2048,
+      isBalloonEnabled: false,
+      balloonMinAllocation: 1024,
+      isHugepagesEnabled: false,
+      hugepagesCount: 2,
+      isSerialConsoleEnabled: true,
+      isVideoEnabled: false,
+      networkInterfaces: [],
+      nextInterfaceId: 0,
     };
   }
 
@@ -64,8 +85,116 @@ class VMCreator extends React.Component {
     this.setState({ locationHostname: e.target.value });
   }
 
+  handleImportXmlChange = () => {
+    this.setState({ importXml: !this.state.importXml });
+  }
+
+  handleRealtimeChange = () => {
+    const newRt = !this.state.isRealtime;
+    const updates = { isRealtime: newRt };
+    if (newRt) {
+      updates.hostPassthrough = true;
+      updates.isBalloonEnabled = false;
+      updates.cpuPinning = Array.from({ length: this.state.vcpuCount }, () => '');
+    }
+    this.setState(updates);
+  }
+
+  handleVcpuCountChange = (e) => {
+    const count = Math.max(1, parseInt(e.target.value, 10) || 1);
+    const updates = { vcpuCount: count };
+    if (this.state.isRealtime) {
+      const current = this.state.cpuPinning;
+      updates.cpuPinning = Array.from({ length: count }, (_, i) => current[i] || '');
+    }
+    this.setState(updates);
+  }
+
+  handleHostPassthroughChange = () => {
+    if (!this.state.isRealtime) {
+      this.setState({ hostPassthrough: !this.state.hostPassthrough });
+    }
+  }
+
+  handleCpuPinningChange = (index, value) => {
+    const cpuPinning = [...this.state.cpuPinning];
+    cpuPinning[index] = value;
+    this.setState({ cpuPinning });
+  }
+
+  handleRtPriorityChange = (e) => {
+    this.setState({ rtPriority: Math.max(1, parseInt(e.target.value, 10) || 1) });
+  }
+
+  handleEmulatorPinChange = (e) => {
+    this.setState({ emulatorPin: e.target.value });
+  }
+
+  handleMemorySizeChange = (e) => {
+    this.setState({ memorySize: Math.max(1, parseInt(e.target.value, 10) || 1) });
+  }
+
+  handleBalloonChange = () => {
+    this.setState({ isBalloonEnabled: !this.state.isBalloonEnabled });
+  }
+
+  handleBalloonMinAllocationChange = (e) => {
+    this.setState({ balloonMinAllocation: Math.max(1, parseInt(e.target.value, 10) || 1) });
+  }
+
+  handleHugepagesChange = () => {
+    this.setState({ isHugepagesEnabled: !this.state.isHugepagesEnabled });
+  }
+
+  handleHugepagesCountChange = (e) => {
+    this.setState({ hugepagesCount: Math.max(1, parseInt(e.target.value, 10) || 1) });
+  }
+
+  handleSerialConsoleChange = () => {
+    this.setState({ isSerialConsoleEnabled: !this.state.isSerialConsoleEnabled });
+  }
+
+  handleVideoChange = () => {
+    this.setState({ isVideoEnabled: !this.state.isVideoEnabled });
+  }
+
+  handleAddInterface = () => {
+    const newIface = {
+      id: this.state.nextInterfaceId,
+      type: 'bridge',
+      bridgeSource: '',
+      bridgeMac: '',
+      bridgeVlan: '',
+      bridgeVirtualportType: '',
+      networkName: '',
+      macvtapSource: '',
+      macvtapMode: 'vepa',
+      macvtapMac: '',
+      pciAddress: '',
+      sriovPool: '',
+    };
+    this.setState({
+      networkInterfaces: [...this.state.networkInterfaces, newIface],
+      nextInterfaceId: this.state.nextInterfaceId + 1,
+    });
+  }
+
+  handleRemoveInterface = (id) => {
+    this.setState({
+      networkInterfaces: this.state.networkInterfaces.filter((iface) => iface.id !== id),
+    });
+  }
+
+  handleInterfaceChange = (id, field, value) => {
+    this.setState({
+      networkInterfaces: this.state.networkInterfaces.map((iface) =>
+        iface.id === id ? { ...iface, [field]: value } : iface
+      ),
+    });
+  }
+
   handleConfirm = () => {
-    const { vmName, vmImagePath, vmXmlPath, diskBusType } = this.state;
+    const { vmName, vmImagePath, vmXmlPath, diskBusType, importXml } = this.state;
     const { refreshVMList } = this.props;
 
     const args = [];
@@ -81,6 +210,12 @@ class VMCreator extends React.Component {
     }else if (this.state.isPreferredHostEnabled){
       args.push('--preferred-host');
       args.push(this.state.locationHostname);
+    }
+
+    if (!importXml) {
+      // Form-based creation not yet implemented
+      console.warn("Form-based XML generation is not yet implemented");
+      return;
     }
 
     this.setState({ isLoading: true, isVMCreated: null });
@@ -124,13 +259,13 @@ class VMCreator extends React.Component {
 
   render() {
     const { isOpen, onClose } = this.props;
-    const { vmName, vmImagePath, vmXmlPath, isLoading, isVMCreated, progressUploadXML, progressUploadQCOW } = this.state;
+    const { vmName, vmImagePath, vmXmlPath, isLoading, isVMCreated, progressUploadXML, progressUploadQCOW, importXml } = this.state;
     const diskBusTypes = [ "sata", "scsi", "usb", "virtio" ];
 
     return (
       <Modal
         title="VM Creation"
-        variant={ModalVariant.small}
+        variant={importXml ? ModalVariant.small : ModalVariant.medium}
         isOpen={isOpen}
         onClose={onClose}
         actions={[
@@ -191,25 +326,85 @@ class VMCreator extends React.Component {
             </div>
           </FormGroup>
 
-          <FormGroup label="Path VM XML" fieldId="path-vm-xml">
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-              <FileAutoComplete
-                id="path-vm-xml"
-                key={vmXmlPath} // Force the update: the modification of "vmXmlPath" by "handleCallback" do not change the value displayed
-                placeholder={"Path to XML file on host's file system"}
-                value={vmXmlPath}
-                onChange={this.handleVmXmlPathChange}
-                superuser="try"
+          <Checkbox
+            id="import-xml"
+            label="Import libvirt XML"
+            isChecked={importXml}
+            onChange={this.handleImportXmlChange}
+          />
+
+          {importXml ? (
+            <FormGroup label="Path VM XML" fieldId="path-vm-xml">
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                <FileAutoComplete
+                  id="path-vm-xml"
+                  key={vmXmlPath} // Force the update: the modification of "vmXmlPath" by "handleCallback" do not change the value displayed
+                  placeholder={"Path to XML file on host's file system"}
+                  value={vmXmlPath}
+                  onChange={this.handleVmXmlPathChange}
+                  superuser="try"
+                />
+                <FileUploader
+                  fileExtension=".xml"
+                  handleCallback={(filePath, fileExtension, progress) => this.handleCallback(filePath, fileExtension, progress)}
+                />
+              </div>
+              {progressUploadXML > 0 && (
+                <Progress value={progressUploadXML} />
+              )}
+            </FormGroup>
+          ) : (
+            <>
+              <Checkbox
+                id="enable-realtime"
+                label="Real-time"
+                isChecked={this.state.isRealtime}
+                onChange={this.handleRealtimeChange}
               />
-              <FileUploader
-                fileExtension=".xml"
-                handleCallback={(filePath, fileExtension, progress) => this.handleCallback(filePath, fileExtension, progress)}
+
+              <CPUConfig
+                vcpuCount={this.state.vcpuCount}
+                hostPassthrough={this.state.hostPassthrough}
+                isRealtime={this.state.isRealtime}
+                cpuPinning={this.state.cpuPinning}
+                rtPriority={this.state.rtPriority}
+                emulatorPin={this.state.emulatorPin}
+                onVcpuCountChange={this.handleVcpuCountChange}
+                onHostPassthroughChange={this.handleHostPassthroughChange}
+                onCpuPinningChange={this.handleCpuPinningChange}
+                onRtPriorityChange={this.handleRtPriorityChange}
+                onEmulatorPinChange={this.handleEmulatorPinChange}
               />
-            </div>
-            {progressUploadXML > 0 && (
-              <Progress value={progressUploadXML} />
-            )}
-          </FormGroup>
+
+              <MemoryConfig
+                memorySize={this.state.memorySize}
+                isRealtime={this.state.isRealtime}
+                isBalloonEnabled={this.state.isBalloonEnabled}
+                balloonMinAllocation={this.state.balloonMinAllocation}
+                isHugepagesEnabled={this.state.isHugepagesEnabled}
+                hugepagesCount={this.state.hugepagesCount}
+                onMemorySizeChange={this.handleMemorySizeChange}
+                onBalloonChange={this.handleBalloonChange}
+                onBalloonMinAllocationChange={this.handleBalloonMinAllocationChange}
+                onHugepagesChange={this.handleHugepagesChange}
+                onHugepagesCountChange={this.handleHugepagesCountChange}
+              />
+
+              <DisplayConfig
+                isSerialConsoleEnabled={this.state.isSerialConsoleEnabled}
+                isVideoEnabled={this.state.isVideoEnabled}
+                onSerialConsoleChange={this.handleSerialConsoleChange}
+                onVideoChange={this.handleVideoChange}
+              />
+
+              <NetworkConfig
+                networkInterfaces={this.state.networkInterfaces}
+                onAddInterface={this.handleAddInterface}
+                onRemoveInterface={this.handleRemoveInterface}
+                onInterfaceChange={this.handleInterfaceChange}
+              />
+            </>
+          )}
 
           <Checkbox
             id="enable-live-migration"
