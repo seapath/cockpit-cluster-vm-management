@@ -30,8 +30,7 @@ class VMCreator extends React.Component {
       progressVMCreation: '',
       isVMCreated: null,
       diskBusType: 'virtio',
-      isLiveMigrationEnabled: false,
-      migrationUser: '',
+      isLiveMigrationEnabled: true,
       isPinnedHostEnabled: false,
       isPreferredHostEnabled: false,
       locationHostname: ''
@@ -54,10 +53,6 @@ class VMCreator extends React.Component {
     this.setState({ diskBusType });
   }
 
-  handleMigrationUserChange = (e) => {
-    this.setState({ migrationUser: e.target.value });
-  }
-
   handleLocationPreferenceChange = (e) => {
     const id = e.target.id;
     this.setState({
@@ -77,7 +72,7 @@ class VMCreator extends React.Component {
     if (this.state.isLiveMigrationEnabled) {
       args.push('--enable-live-migration');
       args.push('--migration-user');
-      args.push(this.state.migrationUser);
+      args.push('libvirtadmin');
     }
 
     if (this.state.isPinnedHostEnabled){
@@ -222,16 +217,6 @@ class VMCreator extends React.Component {
             isChecked={this.state.isLiveMigrationEnabled}
             onChange={this.handleCheckboxChange}
           />
-          {this.state.isLiveMigrationEnabled && (
-            <FormGroup label="Migration User" fieldId="migration-user">
-              <TextInput
-                id="migration-user"
-                value={this.state.migrationUser}
-                onChange={this.handleMigrationUserChange}
-              />
-            </FormGroup>
-          )}
-
         <FormGroup role="radiogroup" label="Location preference" isInline>
           <Radio
             label="None"
