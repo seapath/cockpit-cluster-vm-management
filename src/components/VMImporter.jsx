@@ -31,8 +31,7 @@ class VMImporter extends React.Component {
       isLoading: false,
       isImported: null,
       progressImport: '',
-      isLiveMigrationEnabled: false,
-      migrationUser: '',
+      isLiveMigrationEnabled: true,
       isPinnedHostEnabled: false,
       isPreferredHostEnabled: false,
       locationHostname: '',
@@ -74,10 +73,6 @@ class VMImporter extends React.Component {
     this.setState({ isLiveMigrationEnabled: !this.state.isLiveMigrationEnabled });
   };
 
-  handleMigrationUserChange = (e) => {
-    this.setState({ migrationUser: e.target.value });
-  };
-
   handleLocationPreferenceChange = (e) => {
     const id = e.target.id;
     this.setState({
@@ -98,7 +93,7 @@ class VMImporter extends React.Component {
     if (this.state.isLiveMigrationEnabled) {
       args.push('--enable-live-migration');
       args.push('--migration-user');
-      args.push(this.state.migrationUser);
+      args.push('libvirtadmin');
     }
 
     if (this.state.isPinnedHostEnabled) {
@@ -181,16 +176,6 @@ class VMImporter extends React.Component {
             isChecked={this.state.isLiveMigrationEnabled}
             onChange={this.handleCheckboxChange}
           />
-          {this.state.isLiveMigrationEnabled && (
-            <FormGroup label="Migration User" fieldId="import-migration-user">
-              <TextInput
-                id="import-migration-user"
-                value={this.state.migrationUser}
-                onChange={this.handleMigrationUserChange}
-              />
-            </FormGroup>
-          )}
-
           <FormGroup role="radiogroup" label="Location preference" isInline>
             <Radio
               label="None"
