@@ -166,7 +166,6 @@ class VMCreator extends React.Component {
       bridgeMac: '',
       bridgeVlan: '',
       bridgeVirtualportType: '',
-      networkName: '',
       macvtapSource: '',
       macvtapMode: 'vepa',
       macvtapMac: '',
@@ -193,6 +192,62 @@ class VMCreator extends React.Component {
     });
   }
 
+  buildNetArg = (iface) => {
+    switch (iface.type) {
+      case 'bridge': {
+        const parts = [`type=bridge`, `source=${iface.bridgeSource}`, `mac=${iface.bridgeMac}`];
+        if (iface.bridgeVlan) parts.push(`vlan=${iface.bridgeVlan}`);
+        if (iface.bridgeVirtualportType) parts.push(`virtualport=${iface.bridgeVirtualportType}`);
+        return parts.join(',');
+      }
+      case 'macvtap': {
+        const parts = [`type=macvtap`, `source=${iface.macvtapSource}`, `mac=${iface.macvtapMac}`];
+        if (iface.macvtapMode) parts.push(`mode=${iface.macvtapMode}`);
+        return parts.join(',');
+      }
+      case 'pci':
+        return `type=pci,address=${iface.pciAddress}`;
+      case 'sriov':
+        return `type=sriov,network=${iface.sriovPool}`;
+      default:
+        return null;
+    }
+  }
+
+  buildFormArgs = () => {
+    const args = [
+      '--vcpus', String(this.state.vcpuCount),
+      '--memory', String(this.state.memorySize),
+    ];
+    const cpuset = this.state.cpuPinning.filter((c) => c !== '').join(',');
+    if (cpuset) {
+      args.push('--cpuset', cpuset);
+    }
+    if (this.state.isRealtime) {
+      args.push('--rt');
+      args.push('--rt-priority', String(this.state.rtPriority));
+    }
+    if (this.state.emulatorPin) {
+      args.push('--emulatorpin', this.state.emulatorPin);
+    }
+    if (this.state.isHugepagesEnabled) {
+      args.push('--hugepages');
+    }
+    if (this.state.isBalloonEnabled) {
+      args.push('--balloon');
+    }
+    if (this.state.isVideoEnabled) {
+      args.push('--vnc');
+    }
+    for (const iface of this.state.networkInterfaces) {
+      const netArg = this.buildNetArg(iface);
+      if (netArg) {
+        args.push('--net', netArg);
+      }
+    }
+    return args;
+  }
+
   handleConfirm = () => {
     const { vmName, vmImagePath, vmXmlPath, diskBusType, importXml } = this.state;
     const { refreshVMList } = this.props;
@@ -212,14 +267,14 @@ class VMCreator extends React.Component {
       args.push(this.state.locationHostname);
     }
 
-    if (!importXml) {
-      // Form-based creation not yet implemented
-      console.warn("Form-based XML generation is not yet implemented");
-      return;
+    if (importXml) {
+      args.push('--xml', vmXmlPath);
+    } else {
+      args.push(...this.buildFormArgs());
     }
 
     this.setState({ isLoading: true, isVMCreated: null });
-    cockpit.spawn(["vm-mgr", "create", "-p", "--name", vmName, "--image", vmImagePath, "--xml", vmXmlPath, "--disk-bus", diskBusType, ...args], { superuser: "try" })
+    cockpit.spawn(["vm-mgr", "create", "-p", "--name", vmName, "--image", vmImagePath, "--disk-bus", diskBusType, ...args], { superuser: "try" })
       .stream((output) => {
         this.setState({ progressVMCreation: output.trim() });
       })
