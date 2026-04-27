@@ -15,7 +15,6 @@ import {
 
 const INTERFACE_TYPES = [
   { value: 'bridge', label: 'Bridge' },
-  { value: 'network', label: 'Libvirt network' },
   { value: 'macvtap', label: 'MacvTap' },
   { value: 'pci', label: 'PCI passthrough' },
   { value: 'sriov', label: 'SR-IOV pool' },
@@ -61,20 +60,6 @@ class NetworkConfig extends React.Component {
           />
         </FormGroup>
       </>
-    );
-  }
-
-  renderNetworkFields(iface) {
-    const { onInterfaceChange } = this.props;
-    return (
-      <FormGroup label="Network name" fieldId={`network-name-${iface.id}`}>
-        <TextInput
-          id={`network-name-${iface.id}`}
-          value={iface.networkName}
-          onChange={(e) => onInterfaceChange(iface.id, 'networkName', e.target.value)}
-          placeholder="e.g. default"
-        />
-      </FormGroup>
     );
   }
 
@@ -144,7 +129,6 @@ class NetworkConfig extends React.Component {
   renderInterfaceFields(iface) {
     switch (iface.type) {
       case 'bridge': return this.renderBridgeFields(iface);
-      case 'network': return this.renderNetworkFields(iface);
       case 'macvtap': return this.renderMacvtapFields(iface);
       case 'pci': return this.renderPciFields(iface);
       case 'sriov': return this.renderSriovFields(iface);
