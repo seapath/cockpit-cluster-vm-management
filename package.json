@@ -1,7 +1,7 @@
 {
   "name": "cluster-vm-management",
   "description": "cockpit cluster vm management",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "type": "module",
   "main": "index.js",
   "repository": "",
