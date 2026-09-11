@@ -8,6 +8,23 @@ import cockpit from 'cockpit';
 import PropTypes from 'prop-types';
 import { Button } from '@patternfly/react-core';
 
+// Plugin-owned directory for uploaded VM images and XML. It is kept out of the
+// shared /tmp so that a crafted file name cannot be used to overwrite an
+// arbitrary root-writable path.
+const UPLOAD_DIR = '/var/lib/cockpit-cluster-vm-management/uploads';
+
+// Turn an untrusted file name into a safe basename, or return null when nothing
+// safe remains. Directory components are stripped, characters outside the
+// allow-list are replaced, and leading dots are dropped.
+function safeUploadPath(fileName) {
+  const basename = String(fileName || '').split(/[\\/]/).pop();
+  const sanitized = basename.replace(/[^A-Za-z0-9._-]/g, '_').replace(/^\.+/, '');
+  if (!sanitized) {
+    return null;
+  }
+  return `${UPLOAD_DIR}/${sanitized}`;
+}
+
 class FileUploader extends React.Component {
   constructor(props) {
     super(props);
@@ -24,7 +41,7 @@ class FileUploader extends React.Component {
     }
   }
 
-  sendChunk = (file, chunk, index, totalChunks, channel) => {
+  sendChunk = (file, chunk, index, totalChunks, channel, uploadPath) => {
     const { handleCallback, fileExtension } = this.props;
     const { chunksProgress } = this.state;
     const reader = new FileReader();
@@ -43,9 +60,9 @@ class FileUploader extends React.Component {
       handleCallback(``, fileExtension, progress);
 
       if (index + 1 < totalChunks) {
-        this.sendNextChunk(file, index + 1, totalChunks, channel);
+        this.sendNextChunk(file, index + 1, totalChunks, channel, uploadPath);
       } else {
-        handleCallback(`/tmp/${file.name}`, fileExtension, 100);
+        handleCallback(uploadPath, fileExtension, 100);
         channel.control({ command: 'done' }); // No further messages will be sent through the channel.
       }
     };
@@ -53,26 +70,40 @@ class FileUploader extends React.Component {
     reader.readAsArrayBuffer(chunk);
   }
 
-  sendNextChunk = (file, index, totalChunks, channel) => {
+  sendNextChunk = (file, index, totalChunks, channel, uploadPath) => {
     const CHUNK_SIZE = 64 * 1024; // Default size of the message sent to the socket for the RAW channel (max size: 128 kB can kill the process).
     const start = index * CHUNK_SIZE;
     const end = Math.min(start + CHUNK_SIZE, file.size);
     const chunk = file.slice(start, end);
-    this.sendChunk(file, chunk, index, totalChunks, channel);
+    this.sendChunk(file, chunk, index, totalChunks, channel, uploadPath);
   }
 
   uploadFile = () => {
     const { file } = this.state;
+    const uploadPath = safeUploadPath(file.name);
 
+    if (!uploadPath) {
+      console.error(`Refusing to upload file with unsafe name: ${file.name}`);
+      return;
+    }
 
     const totalChunks = Math.ceil(file.size / (64 * 1024)); // Default size of the message sent to the socket for the RAW channel
-    const channel = cockpit.channel({
-      binary: true,
-      payload: "fsreplace1", // Replace the content of the file given on the path variable
-      path: `/tmp/${file.name}`,
-      superuser: "try",
-    });
-    channel.addEventListener("ready", this.sendNextChunk(file, 0, totalChunks, channel))
+
+    // The fsreplace1 channel writes to a temporary file in the target directory,
+    // so that directory has to exist before the channel is opened.
+    cockpit.spawn(["install", "-d", "-m", "0700", UPLOAD_DIR], { superuser: "try" })
+      .then(() => {
+        const channel = cockpit.channel({
+          binary: true,
+          payload: "fsreplace1", // Replace the content of the file given on the path variable
+          path: uploadPath,
+          superuser: "try",
+        });
+        channel.addEventListener("ready", () => this.sendNextChunk(file, 0, totalChunks, channel, uploadPath));
+      })
+      .catch(error => {
+        console.error("Error creating the upload directory:", error);
+      });
   }
 
   render() {
