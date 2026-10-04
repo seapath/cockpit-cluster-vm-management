@@ -13,7 +13,7 @@ npm run init        # Full setup: install deps, copy cockpit libs to pkg/lib, bu
 npm run build       # Rebuild to dist/
 npm run test        # Run the Vitest unit tests once
 npm run coverage    # Run the tests and enforce the coverage thresholds (90% stmts / 80% branches)
-npm run clean       # Remove dist/, node_modules/, pkg/, and package-lock.json
+npm run clean       # Remove dist/, node_modules/ and pkg/
 ```
 
 Unit tests live in `test/` and use Vitest with @testing-library/react. The

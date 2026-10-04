@@ -7,8 +7,12 @@
   "repository": "",
   "author": "",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.19.4 <21"
+  },
+  "packageManager": "npm@10.8.2",
   "scripts": {
-    "init": "npm install && node build_init.cjs",
+    "init": "npm ci && node build_init.cjs",
     "build": "node build.js",
     "clean": "node build_init.cjs --clean",
     "test": "vitest run",
@@ -26,6 +30,7 @@
     "esbuild-plugin-copy": "2.1.1",
     "esbuild-plugin-replace": "1.4.0",
     "esbuild-sass-plugin": "^3.3.1",
+    "fs-extra": "^11.4.1",
     "jsdom": "^29.1.1",
     "npm-run-all": "^4.1.5",
     "vitest": "^4.1.11"
