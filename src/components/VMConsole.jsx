@@ -72,7 +72,7 @@ export default class VMConsole extends React.Component {
       return output.trim().split('\n');
     } catch (error) {
       console.error(`Error retrieving the list of VM:`, error);
-      return null;
+      return [];
     }
   }
 
