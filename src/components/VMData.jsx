@@ -6,6 +6,7 @@
 import React from 'react';
 import cockpit from 'cockpit';
 import PropTypes from 'prop-types';
+import { applyDefaultLocations, parseResourceLocation, parseVmNames } from '../lib/vmParsing';
 
 class VMData extends React.Component {
   state = {
@@ -25,7 +26,7 @@ class VMData extends React.Component {
   fetchVmInformations = async () => {
     try {
       const output = await cockpit.spawn(["vm-mgr", "list"], { superuser: "try" });
-      const vmNames = output.trim().split('\n').filter(name => name !== "");
+      const vmNames = parseVmNames(output);
 
       if (vmNames.length === 0) {
         this.setState({ VMlist: [] });
@@ -52,9 +53,7 @@ class VMData extends React.Component {
       const locationPromises = VMlist.map((vm, index) =>
         cockpit.spawn(["crm", "resource", "locate", vm.name], { superuser: "try" })
           .then(output => {
-            const regex = /:\s*(\S+)\s*/g;
-            let match = regex.exec(output);
-            const currentNode = match !== null ? match[1] : "-";
+            const currentNode = parseResourceLocation(output);
             return { index, currentNode };
           })
           .catch(error => {
@@ -84,24 +83,10 @@ class VMData extends React.Component {
   fetchVmDefaultLocation = async () => {
     try {
       const output = await cockpit.spawn(["crm", "configure", "show"], { superuser: "try"});
-      // Look for the occurences of "prefer" or "pin" to get informations about the collocation constraint of the deployed VMs
-      // (VM name + collocation type and associated node)
-      const regex = /(prefer|pin)-(?:\S+)\s(\S+)\s(?:\S+)\sinf:\s(.+)/g;
-      let match;
-      const VMlist = [...this.state.VMlist];
-
-      while ((match = regex.exec(output)) !== null) {
-        const resourceName = match[2];
-        const locationType = match[1];
-        const node = match[3];
-        const resourceIndex = VMlist.findIndex((vm) => vm.name === resourceName);
-        if (resourceIndex !== -1) {
-          VMlist[resourceIndex] = {
-            ...VMlist[resourceIndex],
-            defaultNode: locationType + ": " + node,
-          };
-        }
-      }
+      // Look for the occurrences of "prefer" or "pin" to get information about
+      // the collocation constraint of the deployed VMs (VM name + collocation
+      // type and associated node).
+      const VMlist = applyDefaultLocations(this.state.VMlist, output);
       this.setState({ VMlist });
     } catch (error) {
       console.error("Error retrieving default VM locations:", error);

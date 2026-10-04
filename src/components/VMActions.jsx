@@ -5,9 +5,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import cockpit from 'cockpit';
 import { Button, Spinner } from '@patternfly/react-core';
 import VMSnapshot from './VMSnapshot';
 import SelectionModal from './selectionModal';
+import { filterMigratableNodes, parseOnlineNodes, parseResourceRole, parseSnapshotList } from '../lib/vmParsing';
 
 class VMActions extends React.Component {
   constructor(props) {
@@ -86,13 +88,7 @@ class VMActions extends React.Component {
 
     await cockpit.spawn(["crm_mon", "--output-as", "xml"], { superuser: "try" })
           .then((output) => {
-            const parser = new DOMParser();
-            const xml = parser.parseFromString(output, 'text/xml');
-            const resource = xml.querySelector(`resource[id="${selectedVM.name}"]`);
-
-            if (resource) {
-              vmStatus = resource.getAttribute("role");
-            }
+            vmStatus = parseResourceRole(output, selectedVM.name);
           })
 
     if (vmStatus === "Started" || this.pollingAttempts >= this.maxPollingAttempts) {
@@ -148,8 +144,7 @@ class VMActions extends React.Component {
 
     try {
       const output = await cockpit.spawn(["vm-mgr", "list_snapshots", "-n", selectedVM.name], { superuser: "try" });
-      let snapshotList = output.trim().replace(/[\[\]']+/g, '').split(", ");
-      return snapshotList;
+      return parseSnapshotList(output);
     } catch (error) {
       console.error("Error executing VM action:", error);
       return [];
@@ -180,15 +175,8 @@ class VMActions extends React.Component {
     const { selectedVM } = this.props;
     try {
       const output = await cockpit.spawn(["crm", "status", "--exclude=all", "--include=nodes"], {superuser: "try"});
-
-      const onlineNodesRegex = /\* Online: \[\s*([\w\-\s]+?)\s*\]/;
-      const onlineMatch = onlineNodesRegex.exec(output);
-      // If there is a match with the regex and the online node list is not empty, we collect them in an array
-      const onlineNodes = onlineMatch && onlineMatch[1] ? onlineMatch[1].split(' ') : [];
-
-      const filteredNodes = onlineNodes.filter( node => node.trim() !== selectedVM.currentNode.trim());
-
-      return filteredNodes;
+      const onlineNodes = parseOnlineNodes(output);
+      return filterMigratableNodes(onlineNodes, selectedVM.currentNode);
     } catch (error) {
       console.error("Error executing VM action:", error);
       return [];
