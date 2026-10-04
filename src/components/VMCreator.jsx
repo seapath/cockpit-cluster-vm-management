@@ -14,6 +14,7 @@ import {
   Checkbox,
   Radio,
 } from '@patternfly/react-core';
+import cockpit from 'cockpit';
 import FileUploader from './fileUploader';
 import { FileAutoComplete } from "cockpit-components-file-autocomplete.jsx";
 

@@ -20,6 +20,7 @@ import {
   Checkbox,
   Radio,
 } from '@patternfly/react-core';
+import cockpit from 'cockpit';
 
 class VMImporter extends React.Component {
   constructor(props) {
