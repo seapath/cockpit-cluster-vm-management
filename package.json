@@ -24,16 +24,17 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.12",
     "cockpit-repo": "git+https://github.com/cockpit-project/cockpit.git#d34cabacb8e5e1e028c7eea3d6e3b606d862b8ac",
-    "esbuild": "^0.27.3",
+    "esbuild": "^0.28.2",
     "esbuild-plugin-copy": "2.1.1",
     "esbuild-plugin-replace": "1.4.0",
     "esbuild-sass-plugin": "^3.3.1",
     "fs-extra": "^11.4.1",
     "jsdom": "^29.1.1",
     "npm-run-all": "^4.1.5",
-    "vitest": "^4.1.11"
+    "vite": "^8.3.3",
+    "vitest": "^4.1.12"
   },
   "dependencies": {
     "@patternfly/patternfly": "5.3.0",
